@@ -1,6 +1,7 @@
 package rsa
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -11,7 +12,12 @@ import (
 	"math/big"
 )
 
-var ErrWrongFormatKey = errors.New("the key has a wrong format")
+var (
+	ErrWrongFormatKey         = errors.New("the key has a wrong format")
+	ErrUnexpectedBytesPayload = errors.New("unexpected bytes payload")
+
+	paddingBytesSequence = []byte{0xff, 0}
+)
 
 // PrivateEncrypt encrypts a payload with private key and return encrypted bytes or error.
 func PrivateEncrypt(payload []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
@@ -29,22 +35,12 @@ func PublicDecrypt(payload []byte, pubKey *rsa.PublicKey) ([]byte, error) {
 	e := big.NewInt(int64(pubKey.E))
 	c := new(big.Int).Exp(m, e, pubKey.N)
 
-	result := c.Bytes()
-
-	// Skip unnecessary padding from the resulted slice of bytes.
-	skip := 0
-	for i := 2; i < len(result); i++ {
-		if i+1 >= len(result) {
-			break
-		}
-		if result[i] == 0xff && result[i+1] == 0 {
-			skip = i + 2
-
-			break
-		}
+	bbytes := bytes.Split(c.Bytes(), paddingBytesSequence)
+	if len(bbytes) != 2 {
+		return nil, ErrUnexpectedBytesPayload
 	}
 
-	return result[skip:], nil
+	return bbytes[1], nil
 }
 
 // ParsePublic parses *rsa.PublicKey from the raw bytes data.
