@@ -32,7 +32,7 @@ Trying to encode long data will cause `crypto/rsa: message too long for RSA publ
 
 ## Second: encrypt using private key
 
-We are using [rsa.SignPKCS1v15](https://pkg.go.dev/crypto/rsa#SignPKCS1v15) to encrypt.  
+In Go we are using [rsa.SignPKCS1v15](https://pkg.go.dev/crypto/rsa#SignPKCS1v15) to encrypt.  
 The actual operation in terms of cryptography is signing.  
 But we are using it with `crypto.Hash(0)` attribute.  
 As a result we'll get a fully encrypted string.
